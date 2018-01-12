@@ -5,3 +5,5 @@ You are the most stubborn of all the knights. Despite the warnings about the mon
 ## Gameplay
 
 Stubborn Knight is an idle game where you manage your stubborn character about doing stubborn things.
+
+As time goes by, things will get ... Stubborn-er.
