@@ -1,0 +1,3 @@
+<script type="text/template" id="city">
+  <button id="adventure">Adventure !</button>
+</script>

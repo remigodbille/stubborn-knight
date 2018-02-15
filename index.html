@@ -1,80 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>The Stubborn Knight</title>
-      <link rel="stylesheet" href="style/style.css">
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.6/umd/popper.min.js"></script>
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+    <meta charset="utf-8">
+    <title>Test</title>
+
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <!--Menuing part: top, bottom and logs-->
-    <div id="topMenu">
-      Top Menu
-    </div>
+    <div id="frame"></div>
 
-    <div id="logWindow">
-      <span>First log</span>
-    </div>
+<script type="text/template" id="city">
+  <button id="adventure">Adventure !</button>
+</script>
 
-    <div id="bottomMenu">
-      Bottom Menu
-    </div>
+<script type="text/template" id="hp">
+  <div id="character-hp-container" class="container">
+    <div id="character-hp-bar" class="bar"></div>
+    <div id="character-hp" class="info"></div>
+  </div>
+  <br />
+  <div id="mob-hp-container" class="container">
+    <div id="mob-hp-bar" class="bar"></div>
+    <div id="mob-hp" class="info"></div>
+  </div>
+</script>
 
-    <!-- Game window -->
-    <div class="container-fluid" id="combatWindow">
-      <div id="playerZone">
-        <span>YOUR PARTY</span>
-        <div class="row">
-          <div id="topBackParty" class="col">
-            <div class="healthBar" id="topBackPartyHealth">25/53</div>
-            <span>Miles</span>
-          </div>
-          <div id="topFrontParty" class="col">
-            <div class="healthBar" id="topBackPartyHealth">25/53</div>
-            Saitama
-          </div>
-        </div>
-        <div class="row">
-          <div id="bottomBackParty" class="col">
-            <div class="healthBar" id="topBackPartyHealth">25/53</div>
-            CoughGuy
-          </div>
-          <div id="bottomFrontParty" class="col">
-            <div class="healthBar" id="topBackPartyHealth">25/53</div>
-            Midoriya
-          </div>
-        </div>
-      </div>
+    <script src="dest/app.js"></script>
+    <script>
+    App.Game.init();
+    </script>
 
-      <div id="versus">VS</div>
-      
-      <div id="mobZone">
-        <span>ENEMY PARTY</span>
-        <div class="row">
-          <div id="topBackMob" class="col">
-            <div class="healthBar" id="topBackMobHealth">25/53</div>
-            Smolder
-          </div>
-          <div id="topFrontMob" class="col">
-            <div class="healthBar" id="topFrontMobHealth">25/53</div>
-            Snimps
-          </div>
-        </div>
-        <div class="row">
-          <div id="bottomBackMob" class="col">
-            <div class="healthBar" id="bottomBackMobHealth">25/53</div>
-            Less Stubborn guy
-          </div>
-          <div id="bottomFrontMob" class="col">
-            <div class="healthBar" id="bottomFrontMobHealth">25/53</div>
-            Yasou
-          </div>
-        </div>
-      </div>
-    </div>
   </body>
 </html>

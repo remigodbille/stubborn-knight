@@ -1,0 +1,11 @@
+<script type="text/template" id="hp">
+  <div id="character-hp-container" class="container">
+    <div id="character-hp-bar" class="bar"></div>
+    <div id="character-hp" class="info"></div>
+  </div>
+  <br />
+  <div id="mob-hp-container" class="container">
+    <div id="mob-hp-bar" class="bar"></div>
+    <div id="mob-hp" class="info"></div>
+  </div>
+</script>
