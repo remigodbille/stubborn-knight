@@ -1,4 +1,10 @@
 function cacheDom(element) {
+  if (dom[element.id] !== undefined) {
+    return;
+  }
+  
+  element.template = element.innerHTML;
+  
   if (element.id) {
     dom[element.id] = element;
   }

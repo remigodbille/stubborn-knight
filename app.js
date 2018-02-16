@@ -37,6 +37,7 @@ return my;
 })(App.Observer || {});
 
 App.Display = (function(my) {
+var templates = {};
 var views = {};
 var dom = {};
 
@@ -55,7 +56,11 @@ function toggleButtonAdventure(fighting) {
 
 /* Sets the color and size of the health bar as well as the text it contains */
 function setHealthBar(data) {
-  var ratio = data.hp / data.maxHp;
+  if (data.stat !== 'hp') {
+    return;
+  }
+  
+  var ratio = data.value / data.maxValue;
   var color;
   var container;
   var bar;
@@ -71,7 +76,7 @@ function setHealthBar(data) {
     color = '#A00';
   }
 
-  if (data.type === 'character') {
+  if (data.entity === 'knight') {
     container = dom['character-hp-container'];
     bar = dom['character-hp-bar'];
     info = dom['character-hp'];
@@ -83,11 +88,19 @@ function setHealthBar(data) {
   }
 
   bar.style.backgroundColor = color;
-  bar.style.width = ratio * container.offsetWidth + 'px';
-  info.innerHTML = data.hp + ' / ' + data.maxHp;
+  bar.style.width = ratio * 100 + 'px';
+
+  var rendered = Mustache.render(info.template, data);
+  info.innerHTML = rendered;
 }
 
 function cacheDom(element) {
+  if (dom[element.id] !== undefined) {
+    return;
+  }
+  
+  element.template = element.innerHTML;
+  
   if (element.id) {
     dom[element.id] = element;
   }
@@ -101,7 +114,7 @@ function bindEvents() {
   dom['adventure'].addEventListener('click', function() { App.Observer.emit('buttonAdventureClicked'); });
 
   App.Observer.on('zoneChanged', toggleButtonAdventure);
-  App.Observer.on('hpChanged', setHealthBar);
+  App.Observer.on('statChanged', setHealthBar);
 }
 
 function initTemplates() {
@@ -161,10 +174,9 @@ Archetype.prototype.initStats = function(stats) {
 };
 
 /* Inherits from Entity, has an Experience bar, knows which Zone it is in. Forced to start at level 1 because of the variable component in its stats growth */
-function Character(archetype) {
-  Entity.call(this, archetype);
+function Character(archetype, level, name) {
+  Entity.call(this, archetype, level, name);
 
-  this.level = 1;
   this.exp = 0;
   this.currentZone = null;
 }
@@ -194,22 +206,14 @@ Character.prototype.recover = function() {
   var self = this;
 
   config.stats.forEach(function(statName) {
-    self.stats[statName].currentValue = self.stats[statName].maxValue;
+    self.stats[statName].toMax();
   });
 };
 
 /* Resets the Experience bar to 0, increments level, earn variable stats progression */
 Character.prototype.levelUp = function() {
-  console.log(this.archetype.name + ' levels up');
-  var self = this;
-  self.level++;
   self.exp = 0; // Animation de barre d'xp
-  console.log(self.archetype.name + ' is now level ' + self.level);
-
-  config.stats.forEach(function(statName) {
-    var growth = self.archetype.stats[statName].getGrowth();
-    self.stats[statName].increaseMax(growth);
-  });
+  Entity.prototype.levelUp.call(this);
 };
 
 /* Gets diminishing return for similar enemies, scaling down with level. Capped at 100 exp by fight (one full level) */
@@ -248,9 +252,11 @@ var config = {
 };
 
 /* An entity defined by its archetype. Can either be a playable character or a hostile mob */
-function Entity(archetype) {
+function Entity(archetype, level, name) {
   this.archetype = archetype;
+  this.level = level;
   this.stats = {};
+  this.name = name;
 
   this.initStats();
 }
@@ -261,8 +267,33 @@ Entity.prototype.initStats = function() {
 
   config.stats.forEach(function(statName) {
     var stat = self.archetype.stats[statName].baseValue;
-    var entityStat = new EntityStat(stat);
+    var entityStat = new EntityStat(stat, statName, self.statChanged.bind(self));
     self.stats[statName] = entityStat;
+  });
+  
+  for (var i = 1, level = self.level; i < level; i++) {
+    this.levelUp();
+  }
+};
+
+Entity.prototype.statChanged = function(stat) {
+  var eventData = {
+    entity: this.name,
+    value: stat.currentValue,
+    maxValue: stat.maxValue,
+    stat: stat.name
+  };
+  
+  App.Observer.emit('statChanged', eventData);
+}
+
+Entity.prototype.levelUp = function() {
+  var self = this;
+  self.level++;
+
+  config.stats.forEach(function(statName) {
+    var growth = self.archetype.stats[statName].getGrowth();
+    self.stats[statName].increaseMax(growth);
   });
 };
 
@@ -270,7 +301,7 @@ Entity.prototype.initStats = function() {
 Entity.prototype.attack = function(target) {
   var damage = this.stats.atk.currentValue - target.stats.def.currentValue;
   damage = Math.max(damage, 0);
-  //console.log(this.archetype.name + ' deals ' + damage);
+
   target.receiveDamage(damage);
 };
 
@@ -291,19 +322,8 @@ Character.prototype.fight = function() {
   var nextZone;
   var eventData;
 
-  console.log(character.archetype.name + ' starts fighting ' + enemy.archetype.name);
-
   /* The hero strikes first */
   character.attack(enemy);
-
-  eventData = {
-    hp: enemy.stats.hp.currentValue,
-    maxHp: enemy.stats.hp.maxValue,
-    type: 'mob'
-  };
-
-  /* Used to update the HP bar in the display */
-  App.Observer.emit('hpChanged', eventData);
 
   /* If the enemy has been slain, gets rewards and prepare to move to the next hostile Zone */
   if (! enemy.isAlive()) {
@@ -321,16 +341,7 @@ Character.prototype.fight = function() {
   /* If the enemy is still alive, it strikes back */
   else {
     enemy.attack(character);
-  
-    eventData = {
-      hp: character.stats.hp.currentValue,
-      maxHp: character.stats.hp.maxValue,
-      type: 'character'
-    };
-  
-    /* Used to update the HP bar in the display */
-    App.Observer.emit('hpChanged', eventData);
-  
+
     /* If the enemy slew the hero, head back to the city */
     if (! character.isAlive()) {
       console.log('defeat');
@@ -367,7 +378,7 @@ my.init = function() {
     mobArchetypes[archetype.name] = archetype;
   });
 
-  mainCharacter = new Character(characterArchetypes.knight);
+  mainCharacter = new Character(characterArchetypes.knight, 1, "knight");
   city = new Zone('the City', 0, false);
   mainCharacter.moveTo(city);
 
@@ -381,28 +392,14 @@ function play() {
 }
 
 /* Inherits from Entity, has a level and an experience value it grants upon being defeated */
-function Mob(archetype, level) {
-  this.level = level;
-
-  Entity.call(this, archetype);
+function Mob(archetype, level, name) {
+  Entity.call(this, archetype, level, name);
 
   this.expValue = this.calcExpValue();
 }
 
 Mob.prototype = Object.create(Entity.prototype);
 Mob.prototype.constructor = Mob;
-
-/* Builds the Mob's stats object. Override Entity's initStats. Mobs don't have a variable component in their stats growth, so they can easily start at any level */
-Mob.prototype.initStats = function() {
-  var self = this;
-
-  config.stats.forEach(function(statName) {
-    var stat = self.archetype.stats[statName].baseValue;
-    stat += self.archetype.stats[statName].fixedGrowth * (self.level - 1);
-    var entityStat = new EntityStat(stat);
-    self.stats[statName] = entityStat;
-  });
-};
 
 /* Sets experience value from total stats. Grants this much experience to a character defeating it (decreased by the character's level) */
 Mob.prototype.calcExpValue = function() {
@@ -430,28 +427,43 @@ ArchetypeStat.prototype.getGrowth = function() {
 };
 
 /* A stat that is related to an Entity in particular rather than an Archetype */
-function EntityStat(value) {
+function EntityStat(value, name, callback) {
+  this.name = name;
+  this.callback = callback;
   this.maxValue = value;
-  this.currentValue = value;
+  this.setValue(value);
 }
 
 /* When the max value for a stat increases, the current value gets increased by the same amount */
 EntityStat.prototype.increaseMax = function(amount) {
   this.maxValue += amount;
-  this.currentValue += amount;
+  this.setValue(this.currentValue + amount);
 };
 
 /* When a stat gets raised, it can't exceed its max value */
 EntityStat.prototype.increase = function(amount) {
   var newValue = this.currentValue + amount;
-  this.currentValue = Math.min(newValue, this.maxValue);
+  this.setValue(Math.min(newValue, this.maxValue));
 };
 
 /* When a stat gets lowered, it can't go below zero */
 EntityStat.prototype.decrease = function(amount) {
   var newValue = this.currentValue - amount;
-  this.currentValue = Math.max(newValue, 0);
+  this.setValue(Math.max(newValue, 0));
 };
+
+EntityStat.prototype.toMax = function() {
+  this.setValue(this.maxValue);
+}
+
+EntityStat.prototype.toZero = function() {
+  this.setValue(0);
+}
+
+EntityStat.prototype.setValue = function(value) {
+  this.currentValue = value;
+  this.callback(this);
+}
 
 /* A Zone that can either be hospitable (e.g. The City) or hostile, in which case a random Mob is spawned based on the Zone's level */
 function Zone(name, level, fight) {
@@ -470,7 +482,7 @@ Zone.prototype.summonEnemy = function() {
   var keys = Object.keys(mobArchetypes);
   var archetype = mobArchetypes[keys[keys.length * Math.random() << 0]];
 
-  this.enemy = new Mob(archetype, this.level);
+  this.enemy = new Mob(archetype, this.level, archetype.name);
 };
 
 

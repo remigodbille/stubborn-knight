@@ -1,8 +1,7 @@
 /* Inherits from Entity, has an Experience bar, knows which Zone it is in. Forced to start at level 1 because of the variable component in its stats growth */
-function Character(archetype) {
-  Entity.call(this, archetype);
+function Character(archetype, level, name) {
+  Entity.call(this, archetype, level, name);
 
-  this.level = 1;
   this.exp = 0;
   this.currentZone = null;
 }
@@ -32,22 +31,14 @@ Character.prototype.recover = function() {
   var self = this;
 
   config.stats.forEach(function(statName) {
-    self.stats[statName].currentValue = self.stats[statName].maxValue;
+    self.stats[statName].toMax();
   });
 };
 
 /* Resets the Experience bar to 0, increments level, earn variable stats progression */
 Character.prototype.levelUp = function() {
-  console.log(this.archetype.name + ' levels up');
-  var self = this;
-  self.level++;
   self.exp = 0; // Animation de barre d'xp
-  console.log(self.archetype.name + ' is now level ' + self.level);
-
-  config.stats.forEach(function(statName) {
-    var growth = self.archetype.stats[statName].getGrowth();
-    self.stats[statName].increaseMax(growth);
-  });
+  Entity.prototype.levelUp.call(this);
 };
 
 /* Gets diminishing return for similar enemies, scaling down with level. Capped at 100 exp by fight (one full level) */

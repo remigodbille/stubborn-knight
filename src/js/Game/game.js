@@ -17,7 +17,7 @@ my.init = function() {
     mobArchetypes[archetype.name] = archetype;
   });
 
-  mainCharacter = new Character(characterArchetypes.knight);
+  mainCharacter = new Character(characterArchetypes.knight, 1, "knight");
   city = new Zone('the City', 0, false);
   mainCharacter.moveTo(city);
 

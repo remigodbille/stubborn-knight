@@ -1,3 +1,4 @@
+var templates = {};
 var views = {};
 var dom = {};
 
@@ -16,7 +17,11 @@ function toggleButtonAdventure(fighting) {
 
 /* Sets the color and size of the health bar as well as the text it contains */
 function setHealthBar(data) {
-  var ratio = data.hp / data.maxHp;
+  if (data.stat !== 'hp') {
+    return;
+  }
+  
+  var ratio = data.value / data.maxValue;
   var color;
   var container;
   var bar;
@@ -32,7 +37,7 @@ function setHealthBar(data) {
     color = '#A00';
   }
 
-  if (data.type === 'character') {
+  if (data.entity === 'knight') {
     container = dom['character-hp-container'];
     bar = dom['character-hp-bar'];
     info = dom['character-hp'];
@@ -44,6 +49,8 @@ function setHealthBar(data) {
   }
 
   bar.style.backgroundColor = color;
-  bar.style.width = ratio * container.offsetWidth + 'px';
-  info.innerHTML = data.hp + ' / ' + data.maxHp;
+  bar.style.width = ratio * 100 + 'px';
+
+  var rendered = Mustache.render(info.template, data);
+  info.innerHTML = rendered;
 }

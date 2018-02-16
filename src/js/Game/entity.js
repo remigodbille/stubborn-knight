@@ -1,7 +1,9 @@
 /* An entity defined by its archetype. Can either be a playable character or a hostile mob */
-function Entity(archetype) {
+function Entity(archetype, level, name) {
   this.archetype = archetype;
+  this.level = level;
   this.stats = {};
+  this.name = name;
 
   this.initStats();
 }
@@ -12,8 +14,33 @@ Entity.prototype.initStats = function() {
 
   config.stats.forEach(function(statName) {
     var stat = self.archetype.stats[statName].baseValue;
-    var entityStat = new EntityStat(stat);
+    var entityStat = new EntityStat(stat, statName, self.statChanged.bind(self));
     self.stats[statName] = entityStat;
+  });
+  
+  for (var i = 1, level = self.level; i < level; i++) {
+    this.levelUp();
+  }
+};
+
+Entity.prototype.statChanged = function(stat) {
+  var eventData = {
+    entity: this.name,
+    value: stat.currentValue,
+    maxValue: stat.maxValue,
+    stat: stat.name
+  };
+  
+  App.Observer.emit('statChanged', eventData);
+}
+
+Entity.prototype.levelUp = function() {
+  var self = this;
+  self.level++;
+
+  config.stats.forEach(function(statName) {
+    var growth = self.archetype.stats[statName].getGrowth();
+    self.stats[statName].increaseMax(growth);
   });
 };
 
@@ -21,7 +48,7 @@ Entity.prototype.initStats = function() {
 Entity.prototype.attack = function(target) {
   var damage = this.stats.atk.currentValue - target.stats.def.currentValue;
   damage = Math.max(damage, 0);
-  //console.log(this.archetype.name + ' deals ' + damage);
+
   target.receiveDamage(damage);
 };
 

@@ -15,5 +15,5 @@ Zone.prototype.summonEnemy = function() {
   var keys = Object.keys(mobArchetypes);
   var archetype = mobArchetypes[keys[keys.length * Math.random() << 0]];
 
-  this.enemy = new Mob(archetype, this.level);
+  this.enemy = new Mob(archetype, this.level, archetype.name);
 };

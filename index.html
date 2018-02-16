@@ -5,6 +5,7 @@
     <title>Test</title>
 
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js"></script>
   </head>
   <body>
     <div id="frame"></div>
@@ -16,12 +17,12 @@
 <script type="text/template" id="hp">
   <div id="character-hp-container" class="container">
     <div id="character-hp-bar" class="bar"></div>
-    <div id="character-hp" class="info"></div>
+    <div id="character-hp" class="info">{{ value }} / {{ maxValue }}</div>
   </div>
   <br />
   <div id="mob-hp-container" class="container">
     <div id="mob-hp-bar" class="bar"></div>
-    <div id="mob-hp" class="info"></div>
+    <div id="mob-hp" class="info">{{ value }} / {{ maxValue }}</div>
   </div>
 </script>
 
